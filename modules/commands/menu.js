@@ -1,180 +1,103 @@
-const icons = ['⚡', '🔮', '🧠', '🔧', '💻', '🎯', '🧰', '📌', '🌐', '🛸', '🚀', '🪐', '🧿', '🗂️'];
-const commandsPerPage = 45;
-const autoDeleteDelay = 30;
-
-module.exports.config = {
-  name: 'menu',
-  version: '4.0.0',
-  hasPermssion: 0,
-  credits: 'NgTuann',
-  description: 'Menu lệnh đẹp với khung từng lệnh',
-  commandCategory: 'Tiện ích',
-  usages: '[all [số trang]]',
-  cooldowns: 5,
+this.config = {
+    name: "menu",
+    version: "1.1.1",
+    hasPermssion: 0,
+    credits: "DC-Nam mod by Niio-team",
+    description: "Xem danh sách lệnh và info",
+    commandCategory: "Nhóm",
+    usages: "[tên lệnh/all]",
+    cooldowns: 0
 };
-
-module.exports.run = async function ({ api, event, args, permssion }) {
-  const cmds = global.client.commands;
-  const isGroupAdmin = (await api.getThreadInfo(event.threadID)).adminIDs.some(e => e.id == event.senderID);
-
-  if (args[0]?.toLowerCase() === 'all') {
-    const list = Array.from(cmds.values()).filter(cmd => canUse(cmd.config.hasPermssion, permssion, isGroupAdmin));
-    const page = parseInt(args[1]) || 1;
-    return sendAllCommands(api, event, list, page);
-  }
-
-  const groups = groupCommands(cmds, permssion, isGroupAdmin);
-  let msg = '╔════════════════════════════════════════╗\n';
-  msg += '║           ✨ MENU LỆNH ✨            ║\n';
-  msg += '╠════════════════════════════════════════╣\n';
-  
-  groups.forEach((g, i) => {
-    msg += `║ ${(i + 1).toString().padStart(2)}. ${icons[i % icons.length]} ${g.category.padEnd(20)} ║\n`;
-    msg += '╠────────────────────────────────────────╣\n';
-  });
-  
-  msg += '║                                        ║\n';
-  msg += '║ 📌 Reply số tương ứng để xem chi tiết  ║\n';
-  msg += '╚════════════════════════════════════════╝';
-
-  api.sendMessage(msg, event.threadID, (err, info) => {
-    global.client.handleReply.push({
-      name: this.config.name,
-      messageID: info.messageID,
-      author: event.senderID,
-      type: 'menu',
-      groups,
-      timestamp: Date.now()
-    });
-
-    setTimeout(() => {
-      if (api.unsendMessage) api.unsendMessage(info.messageID);
-    }, autoDeleteDelay * 1000);
-  });
-};
-
-async function sendAllCommands(api, event, list, page) {
-  const totalPages = Math.ceil(list.length / commandsPerPage);
-  if (page < 1 || page > totalPages) {
-    return api.sendMessage(`❌ Trang không hợp lệ (1-${totalPages})`, event.threadID, event.messageID);
-  }
-
-  const startIdx = (page - 1) * commandsPerPage;
-  const endIdx = Math.min(startIdx + commandsPerPage, list.length);
-  const pageCommands = list.slice(startIdx, endIdx);
-
-  let msg = '╔════════════════════════════════════════╗\n';
-  msg += `║        📜 MENU ALL (${page}/${totalPages})        ║\n`;
-  msg += '╠════════════════════════════════════════╣\n';
-  
-  pageCommands.forEach((cmd, i) => {
-    const cmdNum = startIdx + i + 1;
-    msg += `╔═══ ${cmdNum.toString().padStart(3)}. ${cmd.config.name.toUpperCase()} ═══╗\n`;
-    msg += `║ ${icons[cmdNum % icons.length]} ${cmd.config.description}\n`;
-    msg += `║ 📌 Cách dùng: ${cmd.config.usages || 'Không có'}\n`;
-    msg += `║ ⏱️ Cooldown: ${cmd.config.cooldowns}s\n`;
-    msg += `║ 🔐 Quyền: ${getPermissionName(cmd.config.hasPermssion)}\n`;
-    msg += '╚════════════════════════════════════════╝\n';
-  });
-  
-  msg += '╔════════════════════════════════════════╗\n';
-  msg += `║ 📄 Trang ${page}/${totalPages} | Tổng ${list.length} lệnh ║\n`;
-  msg += '╚════════════════════════════════════════╝\n';
-  msg += '📌 Gõ "menu all [trang]" để xem trang khác';
-
-  api.sendMessage(msg, event.threadID, (err, info) => {
-    setTimeout(() => {
-      if (api.unsendMessage) api.unsendMessage(info.messageID);
-    }, autoDeleteDelay * 1000);
-  });
+this.languages = {
+    "vi": {},
+    "en": {}
 }
+this.run = async function({
+    api,
+    event,
+    args
+}) {
+    const {
+        threadID: tid,
+        messageID: mid,
+        senderID: sid
+    } = event;
+    var type = !args[0] ? "" : args[0].toLowerCase();
+    var msg = "";
+    const cmds = global.client.commands;
+    const TIDdata = global.data.threadData.get(tid) || {};
+    const moment = require("moment-timezone");
+    var thu = moment.tz('Asia/Ho_Chi_Minh').format('dddd');
+    if (thu == 'Sunday') thu = 'Chủ Nhật';
+    if (thu == 'Monday') thu = 'Thứ Hai';
+    if (thu == 'Tuesday') thu = 'Thứ Ba';
+    if (thu == 'Wednesday') thu = 'Thứ Tư';
+    if (thu == "Thursday") thu = 'Thứ Năm';
+    if (thu == 'Friday') thu = 'Thứ Sáu';
+    if (thu == 'Saturday') thu = 'Thứ Bảy';
+    const time = moment.tz("Asia/Ho_Chi_Minh").format("HH:mm:s | DD/MM/YYYY");
+    const hours = moment.tz("Asia/Ho_Chi_Minh").format("HH");
+    const admin = config.ADMINBOT;
+    const NameBot = config.BOTNAME;
+    const version = config.version;
+    var prefix = TIDdata.PREFIX || global.config.PREFIX;
+    if (type == "all") {
+        const commandsList = Array.from(cmds.values()).map((cmd, index) => {
+            return `${index + 1}. ${cmd.config.name}\n📝 Mô tả: ${cmd.config.description}\n\n`;
+        }).join('');
+        return api.sendMessage(commandsList, tid, mid);
+    }
 
-module.exports.handleReply = async function ({ handleReply, api, event }) {
-  if (event.senderID != handleReply.author) return;
-  
-  if (api.unsendMessage) {
-    try {
-      await api.unsendMessage(handleReply.messageID);
-    } catch (e) {}
-  }
-
-  if (handleReply.type === 'menu') {
-    const index = parseInt(event.body) - 1;
-    const group = handleReply.groups[index];
-    if (!group) return api.sendMessage('❌ Số không hợp lệ', event.threadID, event.messageID);
-
-    let msg = '╔════════════════════════════════════════╗\n';
-    msg += `║     ${icons[index % icons.length]} ${group.category.toUpperCase()}     ║\n`;
-    msg += '╠════════════════════════════════════════╣\n';
-    
-    group.commands.forEach((cmd, i) => {
-      msg += `║ ${(i + 1).toString().padStart(2)}. ${cmd.config.name.padEnd(20)} ║\n`;
-      msg += '╠────────────────────────────────────────╣\n';
-    });
-    
-    msg += '║                                        ║\n';
-    msg += '║ 📌 Reply số lệnh để xem chi tiết       ║\n';
-    msg += '╚════════════════════════════════════════╝';
-
-    api.sendMessage(msg, event.threadID, (err, info) => {
-      global.client.handleReply.push({
-        name: this.config.name,
-        messageID: info.messageID,
-        author: event.senderID,
-        type: 'command',
-        commands: group.commands,
-        timestamp: Date.now()
-      });
-
-      setTimeout(() => {
-        if (api.unsendMessage) api.unsendMessage(info.messageID);
-      }, autoDeleteDelay * 1000);
-    });
-  }
-  else if (handleReply.type === 'command') {
-    const index = parseInt(event.body) - 1;
-    const cmd = handleReply.commands[index];
-    if (!cmd) return api.sendMessage('❌ Số lệnh không hợp lệ', event.threadID, event.messageID);
-
-    let detail = '╔════════════════════════════════════════╗\n';
-    detail += `║         🛠️ CHI TIẾT LỆNH         ║\n`;
-    detail += '╠════════════════════════════════════════╣\n';
-    detail += `║ 🏷️ Tên: ${cmd.config.name}\n`;
-    detail += `║ 📝 Mô tả: ${cmd.config.description}\n`;
-    detail += `║ 📂 Danh mục: ${cmd.config.commandCategory}\n`;
-    detail += `║ 📌 Cách dùng: ${cmd.config.usages || 'Không có'}\n`;
-    detail += `║ ⏱️ Cooldown: ${cmd.config.cooldowns}s\n`;
-    detail += `║ 🔐 Quyền: ${getPermissionName(cmd.config.hasPermssion)}\n`;
-    detail += '╚════════════════════════════════════════╝';
-    
-    api.sendMessage(detail, event.threadID);
-  }
-};
-
-function groupCommands(cmds, permssion, isGroupAdmin) {
-  const grouped = {};
-  for (let [name, cmd] of cmds) {
-    if (!canUse(cmd.config.hasPermssion, permssion, isGroupAdmin)) continue;
-    let cat = cmd.config.commandCategory || 'Khác';
-    if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(cmd);
-  }
-  return Object.entries(grouped).map(([category, commands]) => ({ category, commands }));
+    if (type) {
+        const command = Array.from(cmds.values()).find(cmd => cmd.config.name.toLowerCase() === type);
+        if (!command) {
+            const stringSimilarity = require('string-similarity');
+            const commandName = args.shift().toLowerCase() || "";
+            const commandValues = cmds['keys']();
+            const checker = stringSimilarity.findBestMatch(commandName, commandValues);
+            if (checker.bestMatch.rating >= 0.5) command = client.commands.get(checker.bestMatch.target);
+            msg = `⚠️ Không tìm thấy lệnh '${type}' trong hệ thống.\n📌 Lệnh gần giống được tìm thấy '${checker.bestMatch.target}'`;
+            return api.sendMessage(msg, tid, mid);
+        }
+        const cmd = command.config;
+        msg = `[ HƯỚNG DẪN SỬ DỤNG ]\n\n📜 Tên lệnh: ${cmd.name}\n🕹️ Phiên bản: ${cmd.version}\n🔑 Quyền Hạn: ${TextPr(cmd.hasPermssion)}\n📝 Mô Tả: ${cmd.description}\n🏘️ Nhóm: ${cmd.commandCategory}\n📌 Cách Dùng: ${cmd.usages}\n⏳ Cooldowns: ${cmd.cooldowns}s`;
+        return api.sendMessage(msg, tid, mid);
+    } else {
+        const commandsArray = Array.from(cmds.values()).map(cmd => cmd.config);
+        const array = [];
+        commandsArray.forEach(cmd => {
+            const { commandCategory, name: nameModule } = cmd;
+            const find = array.find(i => i.cmdCategory == commandCategory);
+            if (!find) {
+                array.push({
+                    cmdCategory: commandCategory,
+                    nameModule: [nameModule]
+                });
+            } else {
+                find.nameModule.push(nameModule);
+            }
+        });
+        array.sort(S("nameModule"));
+        array.forEach(cmd => {
+if (['ADMIN','NO PREFIX'].includes(cmd.cmdCategory.toUpperCase()) && !global.config.ADMINBOT.includes(sid)) return
+            msg += `[ ${cmd.cmdCategory.toUpperCase()} ]\n📝 Tổng lệnh: ${cmd.nameModule.length} lệnh\n${cmd.nameModule.join(", ")}\n\n`;
+        });
+        msg += `📝 Tổng số lệnh: ${cmds.size} lệnh\n👤 Tổng số admin bot: ${admin.length}\n👾 Tên Bot: ${NameBot}\n🕹️ Phiên bản: ${version}\n⏰ Hôm nay là: ${thu}\n⏱️ Thời gian: ${time}\n${prefix}help + tên lệnh để xem chi tiết\n${prefix}help + all để xem tất cả lệnh`;
+        return api.sendMessage(msg, tid, mid);
+    }
 }
-
-function canUse(cmdPerm, userPerm, isGroupAdmin) {
-  if (userPerm === 3) return true;
-  if (userPerm === 2) return cmdPerm <= 2;
-  if (isGroupAdmin) return cmdPerm <= 1;
-  return cmdPerm === 0;
+function S(k) {
+    return function(a, b) {
+        let i = 0;
+        if (a[k].length > b[k].length) {
+            i = 1;
+        } else if (a[k].length < b[k].length) {
+            i = -1;
+        }
+        return i * -1;
+    }
 }
-
-function getPermissionName(level) {
-  const permissions = {
-    0: 'Thành viên',
-    1: 'QTV nhóm',
-    2: 'Admin bot',
-    3: 'Developer'
-  };
-  return permissions[level] || 'Không xác định';
+function TextPr(permission) {
+    p = permission;
+    return p == 0 ? "Thành Viên" : p == 1 ? "Quản Trị Viên" : p = 2 ? "Admin Bot" : "Toàn Quyền";
 }
